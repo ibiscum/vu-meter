@@ -1,0 +1,3 @@
+# This package ships a dedicated service binary for appliance use.
+# A manual page is not currently provided.
+hifiberry-vu-meter: no-manual-page [usr/bin/vu-meter-service]

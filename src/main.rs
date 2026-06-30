@@ -1,6 +1,3 @@
-mod capture;
-mod decibel;
-
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -10,7 +7,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use capture::MeterState;
 use serde::Serialize;
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
@@ -18,6 +14,8 @@ use std::sync::{
 };
 use std::time::Duration;
 use tokio::time::interval;
+use vu_meter_service::capture::{self, MeterState};
+use vu_meter_service::protocol;
 
 #[derive(Clone)]
 struct AppState {
@@ -107,31 +105,7 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
                 Ok(m) => m,
                 Err(_) => break,
             };
-
-            let num_channels = meter.channels.len();
-            // 6-byte frame: L_rms, L_peak, R_rms, R_peak, flags, num_channels
-            let mut buf = [0u8; 6];
-
-            if num_channels >= 1 {
-                buf[0] = meter.channels[0].rms_u8;
-                buf[1] = meter.channels[0].peak_u8;
-            }
-            if num_channels >= 2 {
-                buf[2] = meter.channels[1].rms_u8;
-                buf[3] = meter.channels[1].peak_u8;
-            }
-
-            let mut flags: u8 = 0;
-            if num_channels >= 1 && meter.channels[0].clipping {
-                flags |= 0x01;
-            }
-            if num_channels >= 2 && meter.channels[1].clipping {
-                flags |= 0x02;
-            }
-            buf[4] = flags;
-            buf[5] = num_channels as u8;
-
-            buf
+            protocol::build_levels_frame(&meter.channels)
         };
 
         if socket.send(Message::Binary(frame.to_vec().into())).await.is_err() {

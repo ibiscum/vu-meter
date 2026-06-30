@@ -1,0 +1,6 @@
+604fc0acecfb017558fed35c92f9c7d0  usr/bin/vu-meter-service
+af26edf4c0f808ca40cc3d5f820b6a77  usr/lib/systemd/user/vu-meter.service
+2c758de53b0bd2372d82b989548d2cad  usr/share/doc/hifiberry-vu-meter/changelog.Debian.gz
+3d5f85e6ed0ab2465b2759a05a3d5fda  usr/share/doc/hifiberry-vu-meter/copyright
+4d43c2f97b3b9567fcae772c0bb9e987  usr/share/hifiberry-vu-meter/nginx/hifiberry-vu-meter.nginx
+cb3596f5fd6a97e9c9c5e7cdf58078ed  usr/share/lintian/overrides/hifiberry-vu-meter

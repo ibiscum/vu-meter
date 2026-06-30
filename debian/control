@@ -3,16 +3,19 @@ Section: sound
 Priority: optional
 Maintainer: HiFiBerry <info@hifiberry.com>
 Build-Depends: debhelper-compat (= 13),
+               cargo,
+               rustc,
                pkgconf,
                libclang-dev,
                libpipewire-0.3-dev
-Standards-Version: 4.6.0
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
 Homepage: https://github.com/hifiberry/hifiberry-os
 Vcs-Git: https://github.com/hifiberry/vu-meter.git
 Vcs-Browser: https://github.com/hifiberry/vu-meter
 
 Package: hifiberry-vu-meter
-Architecture: arm64
+Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
          pipewire,
          nginx

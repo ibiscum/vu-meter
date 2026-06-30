@@ -12,7 +12,10 @@ pub fn calculate_peak(samples: &[i32]) -> f64 {
     if samples.is_empty() {
         return 0.0;
     }
-    samples.iter().map(|&s| s.abs()).max().unwrap_or(0) as f64
+    samples
+        .iter()
+        .map(|&s| s.unsigned_abs() as f64)
+        .fold(0.0, f64::max)
 }
 
 /// Convert RMS value to decibels relative to a reference value
@@ -42,8 +45,10 @@ pub fn calculate_peak_db(samples: &[i32], reference: f64, min_db: f64, max_db: f
 
 /// Detect if any samples exceed a clipping threshold
 pub fn detect_clipping(samples: &[i32], reference: f64) -> bool {
-    let threshold = (reference * 0.999) as i32;
-    samples.iter().any(|&s| s.abs() >= threshold)
+    let threshold = (reference * 0.999).max(0.0);
+    samples
+        .iter()
+        .any(|&s| (s.unsigned_abs() as f64) >= threshold)
 }
 
 /// Map a dB value to a u8 (0-255) for the binary WebSocket protocol.
@@ -55,4 +60,53 @@ pub fn db_to_u8(db: f64, min_db: f64, max_db: f64) -> u8 {
     }
     let normalized = ((db - min_db) / range).clamp(0.0, 1.0);
     (normalized * 255.0) as u8
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rms_is_zero_for_empty_input() {
+        assert_eq!(calculate_rms(&[]), 0.0);
+    }
+
+    #[test]
+    fn peak_handles_i32_min_without_overflow() {
+        let peak = calculate_peak(&[i32::MIN, -1, 1]);
+        assert_eq!(peak, 2_147_483_648.0);
+    }
+
+    #[test]
+    fn rms_to_db_returns_floor_for_tiny_signal() {
+        assert_eq!(rms_to_db(0.5, 1.0, -60.0), -60.0);
+    }
+
+    #[test]
+    fn rms_db_is_clamped_to_max() {
+        let db = calculate_rms_db(&[i32::MAX], 1.0, -60.0, 0.0);
+        assert_eq!(db, 0.0);
+    }
+
+    #[test]
+    fn peak_db_is_min_for_empty_input() {
+        let db = calculate_peak_db(&[], 2_147_483_648.0, -60.0, 0.0);
+        assert_eq!(db, -60.0);
+    }
+
+    #[test]
+    fn clipping_threshold_detects_edge_and_i32_min() {
+        assert!(!detect_clipping(&[998], 1000.0));
+        assert!(detect_clipping(&[999], 1000.0));
+        assert!(detect_clipping(&[i32::MIN], 2_147_483_648.0));
+    }
+
+    #[test]
+    fn db_to_u8_clamps_and_handles_invalid_range() {
+        assert_eq!(db_to_u8(-60.0, -60.0, 0.0), 0);
+        assert_eq!(db_to_u8(0.0, -60.0, 0.0), 255);
+        assert_eq!(db_to_u8(12.0, -60.0, 0.0), 255);
+        assert_eq!(db_to_u8(-120.0, -60.0, 0.0), 0);
+        assert_eq!(db_to_u8(-10.0, 0.0, 0.0), 0);
+    }
 }
