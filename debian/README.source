@@ -1,0 +1,14 @@
+hifiberry-vu-meter packaging notes
+=================================
+
+This source package uses the native Rust cargo workflow in debian/rules.
+
+Notes for maintainers:
+
+- Build dependencies are declared in debian/control.
+- The package is built directly from this source tree using cargo build --release.
+- No vendored crates are shipped in this repository.
+- The packaging format is 1.0 as declared in debian/source/format.
+
+If Debian policy requirements change for Rust packaging in future releases,
+update debian/rules and debian/control accordingly.

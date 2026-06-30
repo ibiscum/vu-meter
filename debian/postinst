@@ -11,9 +11,8 @@ case "$1" in
 
             # Test and reload nginx
             if nginx -t 2>/dev/null; then
-                if systemctl is-active --quiet nginx; then
-                    systemctl reload nginx && echo "nginx reloaded successfully"
-                fi
+                invoke-rc.d nginx reload >/dev/null 2>&1 || true
+                echo "nginx reload requested"
             else
                 echo "Warning: nginx configuration test failed"
             fi

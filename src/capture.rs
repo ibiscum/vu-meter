@@ -149,7 +149,7 @@ fn run_pipewire_loop(
 ) {
     pw::init();
 
-    let main_loop = match pw::main_loop::MainLoop::new(None) {
+    let main_loop = match pw::main_loop::MainLoopRc::new(None) {
         Ok(ml) => ml,
         Err(e) => {
             eprintln!("Failed to create PipeWire main loop: {:?}", e);
@@ -157,7 +157,7 @@ fn run_pipewire_loop(
         }
     };
 
-    let context = match pw::context::Context::new(&main_loop) {
+    let context = match pw::context::ContextRc::new(&main_loop, None) {
         Ok(ctx) => ctx,
         Err(e) => {
             eprintln!("Failed to create PipeWire context: {:?}", e);
@@ -165,7 +165,7 @@ fn run_pipewire_loop(
         }
     };
 
-    let core = match context.connect(None) {
+    let core = match context.connect_rc(None) {
         Ok(c) => c,
         Err(e) => {
             eprintln!("Failed to connect to PipeWire: {:?}", e);
@@ -180,7 +180,7 @@ fn run_pipewire_loop(
 
     let use_autoconnect = target.is_none();
 
-    let stream = match pw::stream::Stream::new(
+    let stream = match pw::stream::StreamBox::new(
         &core,
         "vu-meter-capture",
         pw::properties::properties! {

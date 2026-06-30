@@ -1,10 +1,10 @@
 #!/usr/bin/make -f
 
-# Rust build configuration
-export CARGO_HOME = $(CURDIR)/debian/cargo_home
-export CARGO_BUILD_JOBS = 1
+# Rust build configuration for reproducible package builds
+export CARGO_BUILD_JOBS = $(or $(DEB_BUILD_PARALLEL),1)
 export CARGO_INCREMENTAL = 0
 export RUST_BACKTRACE = 0
+export CARGO_TERM_COLOR = never
 
 %:
 	dh $@
@@ -12,27 +12,11 @@ export RUST_BACKTRACE = 0
 override_dh_auto_clean:
 	dh_auto_clean
 	rm -rf target/
-	rm -rf $(CARGO_HOME)
 	find . -name "*.rlib" -delete 2>/dev/null || true
 	find . -name "*.rmeta" -delete 2>/dev/null || true
 
-override_dh_auto_configure:
-	# Install Rust if not available
-	if ! which cargo >/dev/null 2>&1; then \
-		mkdir -p $(CARGO_HOME); \
-		curl https://sh.rustup.rs -sSf | \
-		CARGO_HOME=$(CARGO_HOME) \
-		sh -s -- -y --no-modify-path; \
-	fi
-
 override_dh_auto_build:
-	mkdir -p $(CURDIR)/build_workspace/tmp $(CURDIR)/build_workspace/home
-	rm -rf $(CURDIR)/target/* 2>/dev/null || true
-	export TMPDIR="$(CURDIR)/build_workspace/tmp" && \
-	export HOME="$(CURDIR)/build_workspace/home" && \
-	export PATH="$(CARGO_HOME)/bin:$$PATH" && \
-	cargo build --release --jobs 1
-	rm -rf $(CURDIR)/build_workspace
+	cargo build --release --jobs $(CARGO_BUILD_JOBS)
 
 override_dh_auto_install:
 	# Install binary
